@@ -1,3 +1,7 @@
+Python dependencies:
+
+Written for Python 2.x (untested on 3.0); uses numpy and matplotlib (plus other standard Python modules)
+
 These Python scripts will:
 
 i) Make a wget call to the Exoplanet Archive hosted by IPAC to obtain exoplanets and Kepler candidates where their physical radius is known, and write this data to file;
