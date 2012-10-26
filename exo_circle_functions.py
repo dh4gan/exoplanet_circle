@@ -113,4 +113,18 @@ def make_circle_legend(axis, textstring,textx,texty):
     axis.text(textx,texty,textstring, style='italic', transform = axis.transAxes,
         bbox={'facecolor':'slategrey', 'alpha':0.01, 'pad':10})
 
-        
+
+def guess_radii_from_masses_PHL(masses):
+    '''Uses input np array of masses to guess radii according to simple mass-radius prescription (phl.pr.edu)'''
+    
+    radii = np.zeros(len(masses))
+    
+    for i in range(len(masses)):
+        if masses[i] <= 1.0: 
+            radii[i] = masses[i]**0.3
+        elif masses[i] >1.0 and masses[i] <= 200.0:
+            radii[i] = masses[i]**0.5
+        elif masses[i] > 200.0:         
+            radii[i] = 22.6*masses[i]**(-0.0086)
+    
+    return radii

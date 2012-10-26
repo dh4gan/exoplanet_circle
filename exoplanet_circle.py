@@ -15,6 +15,8 @@ area_spacing_factor = 2.0 # Increases the area of the circle to allow gaps
 placing_spacing = 1.1 # Tolerance for distance between planets. 1=planets can touch
 graphic_border = 1.4 # How big is the graphic relative to the area of the annulus/circle?
 
+guess_radius_from_mass = True # Set this to true to estimate planet radius from mass
+
 # 1. Pull exoplanet data using NASA API
 
 # First confirmed exoplanets
@@ -34,8 +36,6 @@ exo.pull_exoplanet_data(table,entries,order,conditions,form,planetfile)
 
 print 'Retrieving Kepler Candidates'
 
-# Repeat this exercise for the Kepler candidates
-
 table = 'table=keplercandidates'
 entries = '&select=prad'
 conditions = '&where=prad+is+not+null'
@@ -47,13 +47,45 @@ exo.pull_exoplanet_data(table,entries,order,conditions,form,candidatefile)
 # 3. Read files into numpy arrays
 
 radii = np.genfromtxt(planetfile, skiprows=11)
+
+
+# If requested, pull planets with masses and calculate radii
+
+if guess_radius_from_mass:
+    print 'Retrieving other planets with masses'
+
+    
+    table = 'table=exoplanets'
+    entries = '&select=pl_masse'    
+    conditions = '&where=pl_rade+is+null+AND+pl_masse+is+not+null'    
+    order = '&order=pl_masse'
+    form = '&format=ascii'
+    guessfile = 'guessedradii.dat'
+
+    exo.pull_exoplanet_data(table,entries,order,conditions,form,guessfile)
+
+    # Read in masses
+    
+    masses = np.genfromtxt(guessfile,skiprows=11)
+    
+    guessradii = fun.guess_radii_from_masses_PHL(masses)
+    
+    # Add to confirmed candidate list
+    
+    radii = np.concatenate((radii,guessradii),axis=0)
+
+
 nplanet = len(radii)
 
 radii_c = np.genfromtxt(candidatefile,skiprows=11)
 
 ncandidate = len(radii_c)
 
-print 'There are ',nplanet, ' planets with confirmed radii'
+if guess_radius_from_mass:
+    print 'There are ',nplanet, ' planets with confirmed and calculated radii'
+else:
+    print 'There are ',nplanet, ' planets with confirmed radii'
+    
 print 'There are ',ncandidate, ' candidates'
 
 # Sort data into descending order
@@ -187,8 +219,11 @@ for i in range(nplanet):
     circle1=plt.Circle((xp[i],yp[i]),radius=radii[i],edgecolor='none',facecolor=colors)    
     ax.add_patch(circle1)
  
-    
-textstring = str(nplanet)+' exoplanets with confirmed physical radii as of '
+
+if guess_radius_from_mass:
+    textstring = str(nplanet)+' exoplanets with confirmed and calculated physical radii as of '
+else:   
+    textstring = str(nplanet)+' exoplanets with confirmed physical radii as of '
     
 fun.make_circle_legend(ax,textstring,0.0,0.0)
 plt.savefig('confirmed.png', format='png',dpi=300)
@@ -220,7 +255,10 @@ for i in range(ncandidate):
     circle1=plt.Circle((xc[i],yc[i]),radius=radii_c[i],edgecolor='none',facecolor=colors)    
     ax.add_patch(circle1)
 
-textstring = str(nplanet)+' exoplanets with confirmed physical radii \n'+str(ncandidate)+' candidate exoplanets as of '
+if guess_radius_from_mass:
+    textstring = str(nplanet)+' exoplanets with confirmed and guessed physical radii \n'+str(ncandidate)+' candidate exoplanets as of '
+else:    
+    textstring = str(nplanet)+' exoplanets with confirmed physical radii \n'+str(ncandidate)+' candidate exoplanets as of '
     
 fun.make_circle_legend(ax,textstring,0.0,0.0)
 
