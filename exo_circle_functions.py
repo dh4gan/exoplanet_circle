@@ -31,7 +31,6 @@ def test_rad(x,y,rad,rmin,rmax):
     
     fail = 0
     r = np.sqrt(x*x + y*y)
-    
     if r-rad< rmin and rmin!=0.0: fail=1
     if r+rad>rmax: fail=1
     

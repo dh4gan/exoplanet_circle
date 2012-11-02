@@ -6,6 +6,7 @@ import numpy as np
 import exoplanet_data as exo
 import exo_circle_functions as fun
 import matplotlib.pyplot as plt
+from time import sleep
 
 pi = 3.141592654
 rearth = 6.371e7/7.1492e8 # Earth Radius in Jupiter Radii
@@ -53,12 +54,11 @@ radii = np.genfromtxt(planetfile, skiprows=11)
 
 if guess_radius_from_mass:
     print 'Retrieving other planets with masses'
-
     
     table = 'table=exoplanets'
-    entries = '&select=pl_masse'    
-    conditions = '&where=pl_rade+is+null+AND+pl_masse+is+not+null'    
-    order = '&order=pl_masse'
+    entries = '&select=pl_msinie'        
+    conditions = '&where=pl_rade+is+null+AND+pl_msinie+is+not+null'    
+    order = '&order=pl_msinie'
     form = '&format=ascii'
     guessfile = 'guessedradii.dat'
 
@@ -87,6 +87,8 @@ else:
     print 'There are ',nplanet, ' planets with confirmed radii'
     
 print 'There are ',ncandidate, ' candidates'
+
+
 
 # Sort data into descending order
 
@@ -139,7 +141,18 @@ annulus_rad2 = annulusarea/pi +circle_rad2
 annulus_rad = np.sqrt(annulus_rad2)
 
 print 'Total area of candidate circles is ',annulusarea
-print 'This gives an annulus of radius ',annulus_rad
+print 'This gives an annulus of outer radius ',annulus_rad,2.0*radii_c[0]
+
+# Check: Is annulus too thin for largest candidate?
+
+if 2.0*radii_c[0]>(annulus_rad-circle_rad):
+    print 'The maximum diameter of an exoplanet candidate is ',radii_c[0]
+    annulus_rad = 1.1*2.0*radii_c[0] + circle_rad
+    print 'The annulus has been enlarged to fit this exoplanet: new outer radius ',annulus_rad
+
+
+
+sleep(5)
 
 # 6. Now begin accept reject to build planet circle
 sep = 0.0
@@ -171,6 +184,8 @@ while i < nplanet:
                 
 # End while loop
 
+print 'Planets placed: now candidates'
+sleep(2)
 # Second while loop to place candidates
 
 i=0
@@ -180,7 +195,7 @@ sep =0.0
 while i<ncandidate:
     # Randomly select x and y inside the annulus
         
-    rc = np.random.mtrand.uniform(low=circle_rad,high=annulus_rad-radii_c[i])
+    rc = np.random.mtrand.uniform(low=circle_rad+radii_c[i],high=annulus_rad-radii_c[i])
     phic = np.random.mtrand.uniform(low=0.0,high = 2.0*pi)
         
     xc[i] = rc*np.cos(phic)    
@@ -189,7 +204,7 @@ while i<ncandidate:
     overlapflag = 0
         
     # Check - does planet's extent exceed circle radius?    
-    overlapflag = fun.test_rad(xc[i], yc[i], radii_c[i], circle_rad, annulus_rad)
+    overlapflag = fun.test_rad(xc[i], yc[i], radii_c[i], circle_rad, annulus_rad)    
     if overlapflag==1: continue      
     
     # Now check to see if there is overlap among neighbours
@@ -256,7 +271,7 @@ for i in range(ncandidate):
     ax.add_patch(circle1)
 
 if guess_radius_from_mass:
-    textstring = str(nplanet)+' exoplanets with confirmed and guessed physical radii \n'+str(ncandidate)+' candidate exoplanets as of '
+    textstring = str(nplanet)+' exoplanets with confirmed and calculated physical radii \n'+str(ncandidate)+' candidate exoplanets as of '
 else:    
     textstring = str(nplanet)+' exoplanets with confirmed physical radii \n'+str(ncandidate)+' candidate exoplanets as of '
     
