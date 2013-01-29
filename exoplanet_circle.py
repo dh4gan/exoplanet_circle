@@ -1,5 +1,5 @@
 # Code to produce an xkcd style plot using the latest exoplanet data
-# Code pulls data via SQL-type query, and delivers all objects with confirmed radii (Earth Radii)
+# Code pulls data via SQL-type query to the IPAC Exoplanet Archive
 # Confirmed exoplanets are plotted in a circle, and candidates are plotted in an enclosing annulus 
 
 import numpy as np
@@ -20,65 +20,34 @@ guess_radius_from_mass = True # Set this to true to estimate planet radius from 
 
 # 1. Pull exoplanet data using NASA API
 
+weblink = 'http://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?'
+    
 # First confirmed exoplanets
 
 print 'Retrieving confirmed planets'
 
-planetfile = 'planetradii.dat'
-table = 'table=exoplanets'
-entries = '&select=pl_rade'
-conditions = '&where=pl_rade+is+not+null'
-order = '&order=pl_rade'
-form = '&format=ascii'
-
-exo.pull_exoplanet_data(table,entries,order,conditions,form,planetfile)
+radii = exo.pull_exoplanet_radii()
 
 # Now candidate exoplanets (Kepler)
 
 print 'Retrieving Kepler Candidates'
 
-table = 'table=keplercandidates'
-entries = '&select=prad'
-conditions = '&where=prad+is+not+null'
-order = '&order=prad'
-candidatefile = 'candidateradii.dat'
-
-exo.pull_exoplanet_data(table,entries,order,conditions,form,candidatefile)
-
-# 3. Read files into numpy arrays
-
-radii = np.genfromtxt(planetfile, skiprows=11)
-
+radii_c = exo.pull_candidate_exoplanet_radii()
 
 # If requested, pull planets with masses and calculate radii
 
 if guess_radius_from_mass:
     print 'Retrieving other planets with masses'
     
-    table = 'table=exoplanets'
-    entries = '&select=pl_msinie'        
-    conditions = '&where=pl_rade+is+null+AND+pl_msinie+is+not+null'    
-    order = '&order=pl_msinie'
-    form = '&format=ascii'
-    guessfile = 'guessedradii.dat'
-
-    exo.pull_exoplanet_data(table,entries,order,conditions,form,guessfile)
-
-    # Read in masses
-    
-    masses = np.genfromtxt(guessfile,skiprows=11)
+    masses = exo.pull_exoplanet_masses(extraconditions='+AND+pl_rade+is+null')
     
     guessradii = fun.guess_radii_from_masses_PHL(masses)
     
-    # Add to confirmed candidate list
+    # Add to confirmed exoplanet list
     
     radii = np.concatenate((radii,guessradii),axis=0)
 
-
 nplanet = len(radii)
-
-radii_c = np.genfromtxt(candidatefile,skiprows=11)
-
 ncandidate = len(radii_c)
 
 if guess_radius_from_mass:
@@ -150,9 +119,7 @@ if 2.0*radii_c[0]>(annulus_rad-circle_rad):
     annulus_rad = 1.1*2.0*radii_c[0] + circle_rad
     print 'The annulus has been enlarged to fit this exoplanet: new outer radius ',annulus_rad
 
-
-
-sleep(5)
+sleep(3)
 
 # 6. Now begin accept reject to build planet circle
 sep = 0.0
@@ -233,15 +200,14 @@ for i in range(nplanet):
         
     circle1=plt.Circle((xp[i],yp[i]),radius=radii[i],edgecolor='none',facecolor=colors)    
     ax.add_patch(circle1)
- 
 
 if guess_radius_from_mass:
     textstring = str(nplanet)+' exoplanets with confirmed and calculated physical radii as of '
 else:   
     textstring = str(nplanet)+' exoplanets with confirmed physical radii as of '
     
-fun.make_circle_legend(ax,textstring,0.0,0.0)
-plt.savefig('confirmed.png', format='png',dpi=300)
+fun.make_circle_legend_date(ax,textstring,0.0,0.0)
+plt.savefig('confirmed.png', format='png')
 
 # Now plot candidates and planets together
 
@@ -275,8 +241,8 @@ if guess_radius_from_mass:
 else:    
     textstring = str(nplanet)+' exoplanets with confirmed physical radii \n'+str(ncandidate)+' candidate exoplanets as of '
     
-fun.make_circle_legend(ax,textstring,0.0,0.0)
+fun.make_circle_legend_date(ax,textstring,0.0,0.0)
 
-plt.savefig('combined.png', format='png', dpi=300)
+plt.savefig('combined.png', format='png')
 
 print 'Done'

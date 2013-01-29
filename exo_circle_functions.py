@@ -15,6 +15,28 @@ neptunes = (84.0/256.0,53.0/256.0,16.0/256.0)
 # Jupiters
 jupiters = (135.0/256.0,40.0/256.0,21.0/256.0)
 
+
+# Alternative color tables
+# Sub Earths
+#subearth = (256.0/256.0,0.0/256.0,256.0/256.0)
+# Earths
+#earth = (78.0/256.0,147/256.0,76/256.0)
+# Super Earths
+#superearth = (64.0/256.0,22.0/256.0,201.0/256.0)
+# Neptunes
+#neptunes = (0.0/256.0,87.0/256.0,53.0/256.0)
+# Jupiters
+#jupiters = (135.0/256.0,40.0/256.0,21.0/256.0)
+
+
+def begin_and_end_years():
+    '''Generates the beginning and end years for producing movies'''
+    
+    date = datetime.now()
+    begin = 2003
+    end = date.year
+    return begin,end
+
 def gen_random_seed_date():
     '''Uses the date to generate a random number seed'''
     date = datetime.now()
@@ -85,6 +107,29 @@ def pick_circle_colour(rad):
     return colors
 
 def make_circle_legend(axis, textstring,textx,texty):    
+    '''Makes circles of each colour to display as a legend to the plot'''
+    
+    # Find size of x and y axes in pixels
+    pointlimits = axis.transData.transform([(0,1),(1,0)])-axis.transData.transform((0,0))
+    
+    pointscale = np.sum(pointlimits)/2.0
+    pointscale = 1.0/pointscale
+    #print pointlimits
+    #print pointscale
+    
+    
+    line1 = plt.Line2D(range(1), range(1), color="white", marker='o', markersize = 2.0, markerfacecolor=subearth)
+    line2 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=2.5*pointscale, markerfacecolor=earth)
+    line3 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=3.0*pointscale, markerfacecolor=superearth)
+    line4 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=3.5*pointscale, markerfacecolor=neptunes)
+    line5 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=5.0*pointscale,markerfacecolor=jupiters)
+    
+    axis.legend((line1,line2,line3,line4,line5),('Subearth','Earth ', 'Superearth','Neptune', 'Jupiter'),numpoints=1, loc='upper right', bbox_to_anchor= (1.1,1.1))    
+    
+    axis.text(textx,texty,textstring, style='italic', transform = axis.transAxes,
+        bbox={'facecolor':'slategrey', 'alpha':0.01, 'pad':10})
+
+def make_circle_legend_date(axis, textstring,textx,texty):    
     '''Makes circles of each colour to display as a legend to the plot'''
     
     # Find size of x and y axes in pixels
